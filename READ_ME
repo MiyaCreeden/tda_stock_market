@@ -1,4 +1,4 @@
 #this project is going to be based in R and see if we can use TDA to predict structural 
 #changes in the stock market and hence anticipate crashes. 
 
-focusing on Palantir Technologies Inc (PLTR.US) data from Sep 30, 2023 to Oct 14, 2026 (weekly)
+focusing on Palantir Technologies Inc (PLTR.US) data from Sep 30, 2023 to Oct 14, 2026 (weekly) source: Stooq
