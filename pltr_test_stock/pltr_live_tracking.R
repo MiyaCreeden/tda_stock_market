@@ -95,6 +95,22 @@ server <- function(input, output, session) {
           if (sub_date != tail(values$dates, 1)) {
             values$dates <- c(values$dates, sub_date)
             values$persistence <- c(values$persistence, max_val)
+            
+            # --- AUTO-SAVE TO DISK ---
+            csv_path <- "../pltr_us_d.csv"
+            disk_data <- read_csv(csv_path, show_col_types = FALSE)
+            
+            # Check if this date is already in the CSV to prevent duplicates
+            if (!(as.Date(sub_date) %in% as.Date(disk_data$Date))) {
+              # Create a matching template row for the new live tick
+              new_row <- disk_data[1, ] * 0 
+              new_row$Date <- sub_date
+              new_row$Close <- tail(sub_prices, 1)
+              
+              # Append and overwrite the CSV file permanently
+              updated_disk_data <- bind_rows(disk_data, new_row)
+              write_csv(updated_disk_data, csv_path)
+            }
           }
         }
       }
