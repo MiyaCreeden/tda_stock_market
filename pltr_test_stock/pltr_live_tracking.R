@@ -33,6 +33,44 @@ ui <- fluidPage(
 
 # 3. Server Logic & Streaming Loop
 server <- function(input, output, session) {
+
+    # 1. Read your current CSV
+csv_path <- "../pltr_us_d.csv"
+disk_data <- read_csv(csv_path, show_col_types = FALSE)
+
+# Find the last date you successfully recorded
+last_disk_date <- max(as.Date(disk_data$Date))
+
+# 2. Fetch full historical series from Yahoo Finance
+latest_market_data <- suppressWarnings(getSymbols("PLTR", auto.assign = FALSE, src = "yahoo"))
+
+# 3. Filter for any trading days strictly newer than your last recorded date
+new_days <- latest_market_data[index(latest_market_data) > last_disk_date]
+
+# 4. If there is a gap of one or more days, append them all
+if (length(index(new_days)) > 0) {
+  
+  # Loop through each missing day and format it to match your CSV structure
+  for (d in index(new_days)) {
+    day_xts <- new_days[as.Date(d)]
+    
+    new_row <- tibble(
+      Date = as.character(as.Date(d)),
+      Open = as.numeric(Op(day_xts)),
+      High = as.numeric(Hi(day_xts)),
+      Low = as.numeric(Lo(day_xts)),
+      Close = as.numeric(Cl(day_xts)),
+      Volume = as.numeric(Vo(day_xts)),
+      Adjusted = as.numeric(Ad(day_xts))
+    )
+    
+    disk_data <- bind_rows(disk_data, new_row)
+  }
+  
+  # Save the fully updated dataset back to disk
+  write_csv(disk_data, csv_path)
+  message("Successfully caught up ", length(index(new_days)), " missed trading days!")
+}
   
   # 1. Pre-load historical daily data on startup so the plot isn't empty
   initial_data <- read_csv("../pltr_us_d.csv")
